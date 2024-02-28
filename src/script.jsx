@@ -1,21 +1,27 @@
 import { createRoot } from "react-dom/client";
-import { StrictMode, useEffect, useMemo, useReducer, useState } from "react";
+import { StrictMode, useEffect, useMemo, useState } from "react";
 import Color from "colorjs.io";
 
 // ---
 // ---
 // ---
 
-const initialColors = ["#ff6600", "#ffee00", "#33ff00", "#3399ff", "#999999"];
+const initialColors = [
+  "lch(50 92 52)",
+  "lch(50 91 95)",
+  "lch(50 110 130)",
+  "lch(50 50 270)",
+  "lch(50 0 0)",
+];
 
 const initialShades = [5, 25, 50, 75, 95];
 
 const availableFormats = ["hex", "rgb", "hsl", "lch"];
 
-function getShadedColor(color, shade) {
+function getShadedColor(color, s) {
   return new Color(color).to("lch").set({
-    l: shade,
-    c: (c) => c * (1 - Math.abs(shade - 50) / 50),
+    l: (l) => s * (0.5 + l / 100),
+    c: (c) => c * (1 - Math.abs(s - 50) / 50),
   });
 }
 
@@ -85,7 +91,7 @@ function useList(initialList) {
   return { list, push, update, remove };
 }
 
-function useLocalStored(key) {
+function useLocalStore(key) {
   const storedValue = localStorage.getItem(key);
 
   function store(value) {
@@ -208,22 +214,22 @@ function ColorCell({ color, backgroundColor, format }) {
 }
 
 function App() {
-  const [storedColors, setStoredColors] = useLocalStored("colors");
+  const [storedColors, setStoredColors] = useLocalStore("colors");
   const colors = useList(storedColors ?? initialColors);
   setStoredColors(colors.list);
 
-  const [storedShades, setStoredShades] = useLocalStored("shades");
+  const [storedShades, setStoredShades] = useLocalStore("shades");
   const shades = useList(storedShades ?? initialShades);
   setStoredShades(shades.list);
 
   const [storedBackgroundColor, setStoredBackgroundColor] =
-    useLocalStored("backgroundColor");
+    useLocalStore("backgroundColor");
   const [backgroundColor, setBackgroundColor] = useState(
     storedBackgroundColor ?? "white"
   );
   setStoredBackgroundColor(backgroundColor);
 
-  const [storedFormat, setStoredFormat] = useLocalStored("format");
+  const [storedFormat, setStoredFormat] = useLocalStore("format");
   const [format, rotateFormat] = useValueRotation(
     availableFormats,
     storedFormat ? availableFormats.indexOf(storedFormat) : 0
