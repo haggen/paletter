@@ -109,36 +109,45 @@ summary {
 }
 
 body {
+  line-height: 1.5;
   font-family: monospace;
   padding: 3rem;
 }
 
 input {
-  background-color: #fff;
+  border-bottom: 1px solid currentColor;
+}
+
+button {
+  cursor: pointer;
 }
 
 :is(input, button):focus-visible {
   outline: 1px dotted black;
 }
 
+.menu {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.button {
+  padding-inline: 0.5rem;
+}
+
 .color-table {
   display: grid;
-  grid-auto-flow: column;
+  grid-template-columns: 0.3fr;
   grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   margin-block-start: 1.5em;
 }
 
 .color-table-cell {
   align-items: center;
-  background-color: var(--color);
   display: flex;
   gap: 1em;
   justify-content: space-between;
   min-width: 10rem;
   padding: 1em;
-}
-
-.color-table-cell span {
-  color: white;
-  background-color: rgba(0, 0, 0, 0.5);
 }

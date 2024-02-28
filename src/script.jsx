@@ -2,37 +2,54 @@ import { createRoot } from "react-dom/client";
 import { StrictMode, useEffect, useMemo, useReducer, useState } from "react";
 import Color from "colorjs.io";
 
+// ---
+// ---
+// ---
+
+const initialColors = ["#ff6600", "#ffee00", "#33ff00", "#3399ff", "#999999"];
+
+const initialShades = [5, 25, 50, 75, 95];
+
+const availableFormats = ["hex", "rgb", "hsl", "lch"];
+
+function getShadedColor(color, shade) {
+  return new Color(color).to("lch").set({
+    l: shade,
+    c: (c) => c * (1 - Math.abs(shade - 50) / 50),
+  });
+}
+
 function copyToClipboard(value) {
   navigator.clipboard.writeText(value);
 }
 
-function NumberInput(props) {
-  const initialStep = props.step ?? 1;
-  const [step, setStep] = useState(initialStep);
+function getFormattedColor(color, format) {
+  switch (format) {
+    case "hex":
+      return color.to("srgb").toString({ format: "hex" });
+    case "rgb":
+      return color.to("srgb").toString({ format: "rgb", precision: 0 });
+    case "hsl":
+      return color.to("hsl").toString({ format: "hsl", precision: 0 });
+    case "lch":
+      return color.to("lch").toString({ precision: 0 });
+    default:
+      throw new Error(`Unknown color format: ${format}`);
+  }
+}
 
-  function onKeyDown(e) {
-    if (e.key === "Shift") {
-      setStep(initialStep * 10);
-    }
+// ---
+// ---
+// ---
+
+function useValueRotation(values, initialIndex = 0) {
+  const [index, setIndex] = useState(initialIndex);
+
+  function rotate() {
+    setIndex((index) => (index + 1) % values.length);
   }
 
-  function onKeyUp(e) {
-    if (e.key === "Shift") {
-      setStep(initialStep);
-    }
-  }
-
-  useEffect(() => {
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, []);
-
-  return <input type="number" {...props} step={step} />;
+  return [values[index], rotate];
 }
 
 function useList(initialList) {
@@ -65,6 +82,55 @@ function useLocalStored(key) {
   return [storedValue ? JSON.parse(storedValue) : undefined, store];
 }
 
+function useContrastingColor(backgroundColor) {
+  return new Color(backgroundColor).contrast("black", "WCAG21") > 4.5
+    ? "black"
+    : "white";
+}
+
+// ---
+// ---
+// ---
+
+function NumberInput({ ...props }) {
+  const initialStep = props.step ?? 1;
+  const [step, setStep] = useState(initialStep);
+
+  function onKeyDown(e) {
+    if (e.key === "Shift") {
+      setStep(initialStep * 10);
+    }
+  }
+
+  function onKeyUp(e) {
+    if (e.key === "Shift") {
+      setStep(initialStep);
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  props.step = step;
+
+  if (props.value) {
+    props.value = Math.round(props.value);
+  }
+
+  if (props.defaultValue) {
+    props.defaultValue = Math.round(props.defaultValue);
+  }
+
+  return <input type="number" {...props} />;
+}
+
 function ColorInput(props) {
   const color = new Color(props.color).to("lch");
 
@@ -78,22 +144,52 @@ function ColorInput(props) {
 
   return (
     <div onChange={onChange} className="color-input">
-      <NumberInput name="l" defaultValue={color.lch.l} min="0" max="100" />
-      <NumberInput name="c" defaultValue={color.lch.c} min="0" max="131" />
-      <NumberInput name="h" defaultValue={color.lch.h || 0} min="0" max="359" />
+      <NumberInput
+        name="l"
+        defaultValue={color.lch.l}
+        step="1"
+        min="0"
+        max="100"
+      />
+      <NumberInput
+        name="c"
+        defaultValue={color.lch.c}
+        step="1"
+        min="0"
+        max="131"
+      />
+      <NumberInput
+        name="h"
+        defaultValue={color.lch.h || 0}
+        step="1"
+        min="0"
+        max="359"
+      />
     </div>
   );
 }
 
-const initialColors = ["#ff5500", "#aaff00", "#5500ff", "#000000"];
+function ColorCell({ color, backgroundColor, format }) {
+  const label = getFormattedColor(color, format);
+  const textColor = useContrastingColor(color);
 
-const initialShades = [0, 25, 50, 75, 100];
+  return (
+    <div
+      className="color-table-cell"
+      style={{
+        color: textColor,
+        backgroundColor: color.to("srgb").toString(),
+      }}
+    >
+      <button title="Copy to clipboard" onClick={() => copyToClipboard(label)}>
+        {label}
+      </button>
 
-function getShadedColor(color, shade) {
-  return new Color(color).to("lch").set({
-    l: (l) => l * (shade / 100),
-    c: (c) => c - Math.abs(shade - 50),
-  });
+      <span title="Contrast against background WCAG 2.1">
+        {color.contrast(backgroundColor, "WCAG21").toFixed(2)}
+      </span>
+    </div>
+  );
 }
 
 function App() {
@@ -110,8 +206,14 @@ function App() {
   const [backgroundColor, setBackgroundColor] = useState(
     storedBackgroundColor ?? "white"
   );
-
   setStoredBackgroundColor(backgroundColor);
+
+  const [storedFormat, setStoredFormat] = useLocalStored("format");
+  const [format, rotateFormat] = useValueRotation(
+    availableFormats,
+    availableFormats.indexOf(storedFormat)
+  );
+  setStoredFormat(format);
 
   const colorTable = useMemo(
     () =>
@@ -125,20 +227,24 @@ function App() {
     document.body.style.backgroundColor = backgroundColor;
   }, [backgroundColor]);
 
+  const textColor = useContrastingColor(backgroundColor);
+
   return (
-    <>
-      <div>
+    <main style={{ color: textColor }}>
+      <div className="menu">
+        Background:
         <ColorInput
           color={backgroundColor}
           onChange={(color) => setBackgroundColor(color.toString())}
         />
         <button onClick={() => shades.push(100)}>Add shade</button>
         <button onClick={() => colors.push("red")}>Add color</button>
+        <button onClick={() => rotateFormat()}>Format: {format}</button>
       </div>
 
       <div className="color-table">
         <div className="color-table-column">
-          <div className="color-table-cell">-</div>
+          <div className="color-table-cell">&nbsp;</div>
 
           {shades.list.map((shade, shadeId) => (
             <div key={shadeId} className="color-table-cell">
@@ -149,7 +255,9 @@ function App() {
                 value={shade}
                 onChange={(e) => shades.update(shadeId, e.target.valueAsNumber)}
               />
-              <button onClick={() => shades.remove(shadeId)}>×</button>
+              <button className="button" onClick={() => shades.remove(shadeId)}>
+                ×
+              </button>
             </div>
           ))}
         </div>
@@ -161,33 +269,24 @@ function App() {
                 color={colors.list[colorId]}
                 onChange={(color) => colors.update(colorId, color.toString())}
               />
-              <button onClick={() => colors.remove(colorId)}>×</button>
+              <button className="button" onClick={() => colors.remove(colorId)}>
+                ×
+              </button>
             </div>
 
             {row.map((color, shadeId) => (
-              <div
+              <ColorCell
                 key={shadeId}
-                className="color-table-cell"
-                style={{
-                  "--color": color.toString(),
-                }}
-                onClick={() =>
-                  copyToClipboard(color.to("srgb").toString({ format: "hex" }))
-                }
-              >
-                <span>{color.to("srgb").toString({ format: "hex" })}</span>
-                <span>
-                  {color
-                    .to("srgb")
-                    .contrast(backgroundColor, "WCAG21")
-                    .toFixed(2)}
-                </span>
-              </div>
+                color={color}
+                backgroundColor={backgroundColor}
+                format={format}
+                rotateFormat={rotateFormat}
+              />
             ))}
           </div>
         ))}
       </div>
-    </>
+    </main>
   );
 }
 
