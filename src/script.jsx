@@ -38,6 +38,21 @@ function getFormattedColor(color, format) {
   }
 }
 
+function getCSS(colorTable, format) {
+  const src = colorTable.map((colors, colorId) => {
+    return colors
+      .map((color, shadeId) => {
+        return `--color-${colorId}-${shadeId}: ${getFormattedColor(
+          color,
+          format
+        )};`;
+      })
+      .join("\n");
+  });
+
+  return src.join("\n");
+}
+
 // ---
 // ---
 // ---
@@ -240,6 +255,9 @@ function App() {
         <button onClick={() => shades.push(100)}>Add shade</button>
         <button onClick={() => colors.push("red")}>Add color</button>
         <button onClick={() => rotateFormat()}>Format: {format}</button>
+        <button onClick={() => copyToClipboard(getCSS(colorTable, format))}>
+          Copy CSS
+        </button>
       </div>
 
       <div className="color-table">
