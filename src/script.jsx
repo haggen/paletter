@@ -226,7 +226,7 @@ function App() {
   const [storedFormat, setStoredFormat] = useLocalStored("format");
   const [format, rotateFormat] = useValueRotation(
     availableFormats,
-    availableFormats.indexOf(storedFormat)
+    storedFormat ? availableFormats.indexOf(storedFormat) : 0
   );
   setStoredFormat(format);
 
