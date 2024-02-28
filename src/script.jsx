@@ -28,11 +28,11 @@ function getFormattedColor(color, format) {
     case "hex":
       return color.to("srgb").toString({ format: "hex" });
     case "rgb":
-      return color.to("srgb").toString({ format: "rgb", precision: 0 });
+      return color.to("srgb").toString({ format: "rgb", precision: 2 });
     case "hsl":
-      return color.to("hsl").toString({ format: "hsl", precision: 0 });
+      return color.to("hsl").toString({ format: "hsl", precision: 2 });
     case "lch":
-      return color.to("lch").toString({ precision: 0 });
+      return color.to("lch").toString({ precision: 2 });
     default:
       throw new Error(`Unknown color format: ${format}`);
   }
