@@ -114,10 +114,7 @@ body {
   padding: 3rem;
 }
 
-input {
-  border-bottom: 1px solid currentColor;
-}
-
+a,
 button {
   cursor: pointer;
 }
@@ -135,7 +132,23 @@ button {
   padding-inline: 0.5rem;
 }
 
+.check-box {
+  cursor: pointer;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.check-box input::after {
+  content: "☐";
+  display: inline;
+}
+
+.check-box input:checked::after {
+  content: "☑";
+}
+
 .number-input {
+  border-bottom: 1px solid currentColor;
   width: 6ch;
 }
 

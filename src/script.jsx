@@ -163,6 +163,7 @@ function ColorInput(props) {
         step="1"
         min="0"
         max="100"
+        title="Lightness of LCH"
       />
       <NumberInput
         name="c"
@@ -170,6 +171,7 @@ function ColorInput(props) {
         step="1"
         min="0"
         max="131"
+        title="Chroma of LCH"
       />
       <NumberInput
         name="h"
@@ -177,22 +179,30 @@ function ColorInput(props) {
         step="1"
         min="0"
         max="359"
+        title="Hue of LCH"
       />
     </div>
   );
 }
 
-function ColorCell({ color, backgroundColor, format }) {
+function ColorCell({ color, backgroundColor, format, swapColors }) {
   const label = getFormattedColor(color, format);
   const textColor = useContrastingColor(color);
 
   return (
     <div
       className="color-table-cell"
-      style={{
-        color: textColor,
-        backgroundColor: color.to("srgb").toString(),
-      }}
+      style={
+        swapColors
+          ? {
+              color: color.to("srgb").toString(),
+              backgroundColor: "transparent",
+            }
+          : {
+              color: textColor,
+              backgroundColor: color.to("srgb").toString(),
+            }
+      }
     >
       <button title="Copy to clipboard" onClick={() => copyToClipboard(label)}>
         {label}
@@ -228,6 +238,10 @@ function App() {
   );
   setStoredFormat(format);
 
+  const [storedSwapColors, setStoredSwapColors] = useLocalStore("swap-colors");
+  const [swapColors, setSwapColors] = useState(storedSwapColors ?? false);
+  setStoredSwapColors(swapColors);
+
   const colorTable = useMemo(
     () =>
       colors.list.map((color) =>
@@ -253,9 +267,18 @@ function App() {
         <button onClick={() => shades.push(100)}>Add shade</button>
         <button onClick={() => colors.push("red")}>Add color</button>
         <button onClick={() => rotateFormat()}>Format: {format}</button>
+        <label className="check-box">
+          <input
+            type="checkbox"
+            checked={swapColors}
+            onChange={() => setSwapColors(!swapColors)}
+          />{" "}
+          Swap colors
+        </label>
         <button onClick={() => copyToClipboard(getCSS(colorTable, format))}>
           Copy CSS
         </button>
+        <a href="https://github.com/haggen/paletter">GitHub</a>
       </div>
 
       <div className="color-table">
@@ -296,7 +319,7 @@ function App() {
                 color={color}
                 backgroundColor={backgroundColor}
                 format={format}
-                rotateFormat={rotateFormat}
+                swapColors={swapColors}
               />
             ))}
           </div>
