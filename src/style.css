@@ -135,6 +135,10 @@ button {
   padding-inline: 0.5rem;
 }
 
+.number-input {
+  width: 6ch;
+}
+
 .color-table {
   display: grid;
   grid-template-columns: 0.3fr;

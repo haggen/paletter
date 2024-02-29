@@ -48,7 +48,7 @@ function getCSS(colorTable, format) {
   const src = colorTable.map((colors, colorId) => {
     return colors
       .map((color, shadeId) => {
-        return `--color-${colorId}-${shadeId}: ${getFormattedColor(
+        return `--color-${colorId + 1}-${shadeId + 1}: ${getFormattedColor(
           color,
           format
         )};`;
@@ -141,15 +141,7 @@ function NumberInput({ ...props }) {
 
   props.step = step;
 
-  if (props.value) {
-    props.value = Math.round(props.value);
-  }
-
-  if (props.defaultValue) {
-    props.defaultValue = Math.round(props.defaultValue);
-  }
-
-  return <input type="number" {...props} />;
+  return <input type="number" className="number-input" {...props} />;
 }
 
 function ColorInput(props) {
@@ -167,21 +159,21 @@ function ColorInput(props) {
     <div onChange={onChange} className="color-input">
       <NumberInput
         name="l"
-        defaultValue={color.lch.l}
+        defaultValue={Math.round(color.lch.l)}
         step="1"
         min="0"
         max="100"
       />
       <NumberInput
         name="c"
-        defaultValue={color.lch.c}
+        defaultValue={Math.round(color.lch.c)}
         step="1"
         min="0"
         max="131"
       />
       <NumberInput
         name="h"
-        defaultValue={color.lch.h || 0}
+        defaultValue={Math.round(color.lch.h || 0)}
         step="1"
         min="0"
         max="359"
