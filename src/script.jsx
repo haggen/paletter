@@ -18,11 +18,23 @@ const initialShades = [5, 25, 50, 75, 95];
 
 const availableFormats = ["hex", "rgb", "hsl", "lch"];
 
-function getShadedColor(color, s) {
-  return new Color(color).to("lch").set({
-    l: (l) => s * (0.5 + l / 100),
-    c: (c) => c * (1 - Math.abs(s - 50) / 50),
+function getShadedColor(color, backgroundColor, level) {
+  color = new Color(color).to("lch");
+  backgroundColor = new Color(backgroundColor).to("lch");
+
+  const invertedBackgroundColor = new Color(backgroundColor).set({
+    l: (l) => 100 - l,
   });
+
+  if (level < 50) {
+    return invertedBackgroundColor.mix(color, level / 50);
+  }
+
+  if (level > 50) {
+    return color.mix(backgroundColor, (level - 50) / 50);
+  }
+
+  return color;
 }
 
 function copyToClipboard(value) {
@@ -32,13 +44,17 @@ function copyToClipboard(value) {
 function getFormattedColor(color, format) {
   switch (format) {
     case "hex":
-      return color.to("srgb").toString({ format: "hex" });
+      return new Color(color).to("srgb").toString({ format: "hex" });
     case "rgb":
-      return color.to("srgb").toString({ format: "rgb", precision: 2 });
+      return new Color(color)
+        .to("srgb")
+        .toString({ format: "rgb", precision: 2 });
     case "hsl":
-      return color.to("hsl").toString({ format: "hsl", precision: 2 });
+      return new Color(color)
+        .to("hsl")
+        .toString({ format: "hsl", precision: 2 });
     case "lch":
-      return color.to("lch").toString({ precision: 2 });
+      return new Color(color).to("lch").toString({ precision: 2 });
     default:
       throw new Error(`Unknown color format: ${format}`);
   }
@@ -247,9 +263,11 @@ function App() {
   const colorTable = useMemo(
     () =>
       colors.list.map((color) =>
-        shades.list.map((shade) => getShadedColor(color, shade))
+        shades.list.map((shade) =>
+          getShadedColor(color, backgroundColor, shade)
+        )
       ),
-    [colors.list, shades.list]
+    [colors.list, shades.list, backgroundColor]
   );
 
   useEffect(() => {
