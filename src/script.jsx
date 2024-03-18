@@ -44,7 +44,7 @@ function getFormattedColor(color, format) {
   }
 }
 
-function getCSS(colorTable, format) {
+function getCSS(colorTable, backgroundColor, format) {
   const src = colorTable.map((colors, colorId) => {
     return colors
       .map((color, shadeId) => {
@@ -55,6 +55,8 @@ function getCSS(colorTable, format) {
       })
       .join("\n");
   });
+
+  src.unshift(`--background: ${getFormattedColor(backgroundColor, format)};`);
 
   return src.join("\n");
 }
@@ -275,7 +277,11 @@ function App() {
           />{" "}
           Swap colors
         </label>
-        <button onClick={() => copyToClipboard(getCSS(colorTable, format))}>
+        <button
+          onClick={() =>
+            copyToClipboard(getCSS(colorTable, backgroundColor, format))
+          }
+        >
           Copy CSS
         </button>
         <a href="https://github.com/haggen/paletter">GitHub</a>
